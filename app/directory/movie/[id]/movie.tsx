@@ -17,7 +17,6 @@ export default function Movie({ id }: { id: string }) {
     return <Spinner />;
   }
 
-  console.log('movie data', data);
   return (
     <div>
       <div>

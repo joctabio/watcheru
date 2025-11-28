@@ -2,10 +2,10 @@
 
 import fetchTmdbApi from '@/lib/api';
 
-export async function fetchMoviesByTitle(name: string) {
-  const url = `${process.env.API_URL}s=${name}`;
+export async function fetchMoviesByTitle(title: string) {
+  const endpoint = `/search/movie?query=${title}`;
 
-  const response = await fetch(url);
+  const response = await fetchTmdbApi(endpoint);
   const data = await response.json();
 
   return data;
@@ -38,4 +38,11 @@ export async function fetchRandomShow() {
   const randomIndex = Math.floor(Math.random() * data.results.length);
   const randomMovie = data.results[randomIndex];
   return randomMovie;
+}
+
+export async function fetchMovieGenres() {
+  const response = await fetchTmdbApi(`/genre/movie/list`);
+  const data = await response.json();
+
+  return data;
 }

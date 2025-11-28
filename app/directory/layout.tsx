@@ -1,4 +1,5 @@
 import Header from '@/components/header';
+import { Suspense } from 'react';
 
 export default function DirectoryLayout({
   children
@@ -6,9 +7,11 @@ export default function DirectoryLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <Header />
-      {children}
-    </div>
+    <Suspense>
+      <div>
+        <Header />
+        {children}
+      </div>
+    </Suspense>
   );
 }

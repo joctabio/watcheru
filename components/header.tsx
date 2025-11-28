@@ -12,7 +12,6 @@ import {
   InputGroupInput
 } from '@/components/ui/input-group';
 import { IconSearch } from '@tabler/icons-react';
-import Link from 'next/link';
 
 const formSchema = z.object({
   searchText: z.string().min(1)
@@ -34,7 +33,7 @@ export default function Header() {
   };
 
   return (
-    <div className='fixed w-full z-50 border-b flex items-center justify-between gap-4'>
+    <div className='fixed top-0 w-full z-50 flex items-center justify-between gap-4'>
       <div className='flex px-6 py-4 w-full gap-5'>
         <div className='flex w-full items-center gap-5'>
           <a href={'/'} title={'Watcheru homepage'}>
