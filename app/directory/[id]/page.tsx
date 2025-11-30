@@ -23,7 +23,7 @@ export default async function MoviePage({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className={'mt-[68px] pt-10'}>
+      <div className={'mt-[68px] pt-6 pb-10 px-6'}>
         <Movie id={id} />
       </div>
     </HydrationBoundary>
