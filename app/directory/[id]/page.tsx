@@ -1,9 +1,9 @@
 import { getQueryClient } from '@/app/get-query-client';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import Movie from './movie';
-import { fetchMovieById } from '@/app/queries';
+import { fetchMovieById, fetchMovieGenres } from '@/app/queries';
 
-export default async function MovieLayout({
+export default async function MoviePage({
   params
 }: {
   params: Promise<{ id: string }>;
@@ -16,9 +16,16 @@ export default async function MovieLayout({
     queryFn: () => fetchMovieById(id)
   });
 
+  queryClient.prefetchQuery({
+    queryKey: ['genres'],
+    queryFn: () => fetchMovieGenres()
+  });
+
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Movie id={id} />
+      <div className={'mt-[68px] pt-10'}>
+        <Movie id={id} />
+      </div>
     </HydrationBoundary>
   );
 }

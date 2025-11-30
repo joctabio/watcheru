@@ -51,7 +51,7 @@ export default function SearchResults() {
   return (
     <div className='w-full px-6 py-4 flex flex-col gap-4'>
       <div className='flex align-middle justify-between'>
-        <h4>Showing results for "{searchText}"</h4>
+        <h4>Showing results for &quot;{searchText}&quot;</h4>
         <ButtonGroup>
           <Button
             variant='outline'
@@ -73,26 +73,28 @@ export default function SearchResults() {
       </div>
 
       <ItemGroup
-        className={`${layoutMode === 'grid' ? 'grid grid-cols-6' : ''} gap-4`}
+        className={`${
+          layoutMode === 'grid'
+            ? 'grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6'
+            : ''
+        } gap-4`}
       >
         {data?.results?.map((movie: Movie) => (
           <Item key={movie.id} variant='default' className='p-0' asChild>
-            <Link href={`/movie/${movie.id}`} title={movie.title}>
-              {/* {movie.Poster !== 'N/A' && ( */}
+            <Link href={`/directory/${movie.id}`} title={movie.title}>
               <ItemHeader>
                 <Image
                   src={
                     movie.poster_path !== 'N/A'
-                      ? `https://image.tmdb.org/t/p/w200${movie.poster_path}`
+                      ? `https://image.tmdb.org/t/p/w300${movie.poster_path}`
                       : '/no-image-available.png'
                   }
                   alt={`${movie.title} Poster`}
-                  width={128}
-                  height={250}
+                  width={200}
+                  height={300}
                   className={'object-cover aspect-auto w-full rounded-sm'}
                 />
               </ItemHeader>
-              {/* )} */}
               <ItemContent>
                 <ItemTitle>{movie.title}</ItemTitle>
                 <ItemDescription>

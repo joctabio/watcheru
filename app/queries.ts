@@ -12,9 +12,7 @@ export async function fetchMoviesByTitle(title: string) {
 }
 
 export async function fetchMovieById(id: string) {
-  const url = `${process.env.API_URL}i=${id}`;
-
-  const response = await fetch(url);
+  const response = await fetchTmdbApi(`/movie/${id}`);
   const data = await response.json();
 
   return data;
@@ -44,5 +42,12 @@ export async function fetchMovieGenres() {
   const response = await fetchTmdbApi(`/genre/movie/list`);
   const data = await response.json();
 
-  return data;
+  try {
+    const { genres } = data;
+    return genres;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+
+    throw new Error(message);
+  }
 }
