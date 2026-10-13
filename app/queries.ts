@@ -1,53 +1,26 @@
-'use server';
+import { getGenres, getMovie, getProviders, pickMovie, pickShow, searchMovies } from './movie-actions';
+import type { MovieActionResult, MovieFilters } from './definitions';
 
-import fetchTmdbApi from '@/lib/api';
-
-export async function fetchMoviesByTitle(title: string) {
-  const endpoint = `/search/movie?query=${title}`;
-
-  const response = await fetchTmdbApi(endpoint);
-  const data = await response.json();
-
-  return data;
+function unwrap<T>(result: MovieActionResult<T>): T {
+  if (!result.ok) throw new Error(result.error);
+  return result.data;
 }
 
+export async function fetchMoviesByTitle(title: string, page = 1) {
+  return unwrap(await searchMovies(title, page));
+}
 export async function fetchMovieById(id: string) {
-  const response = await fetchTmdbApi(`/movie/${id}`);
-  const data = await response.json();
-
-  return data;
+  return unwrap(await getMovie(id));
 }
-
-export async function fetchRandomMovie() {
-  const page = Math.floor(Math.random() * 500) + 1;
-  const response = await fetchTmdbApi(`/discover/movie?page=${page}`);
-  const data = await response.json();
-
-  const randomIndex = Math.floor(Math.random() * data.results.length);
-  const randomMovie = data.results[randomIndex];
-  return randomMovie;
+export async function fetchMovieProviders(id: string) {
+  return unwrap(await getProviders(id));
 }
-
+export async function fetchRandomMovie(filters: MovieFilters = {}, excludedIds: number[] = []) {
+  return unwrap(await pickMovie(filters, excludedIds));
+}
 export async function fetchRandomShow() {
-  const page = Math.floor(Math.random() * 500) + 1;
-  const response = await fetchTmdbApi(`/discover/tv?page=${page}`);
-  const data = await response.json();
-
-  const randomIndex = Math.floor(Math.random() * data.results.length);
-  const randomMovie = data.results[randomIndex];
-  return randomMovie;
+  return unwrap(await pickShow());
 }
-
 export async function fetchMovieGenres() {
-  const response = await fetchTmdbApi(`/genre/movie/list`);
-  const data = await response.json();
-
-  try {
-    const { genres } = data;
-    return genres;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-
-    throw new Error(message);
-  }
+  return unwrap(await getGenres());
 }

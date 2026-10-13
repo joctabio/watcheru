@@ -7,12 +7,6 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'm.media-amazon.com',
-        port: '',
-        search: ''
-      },
-      {
-        protocol: 'https',
         hostname: 'image.tmdb.org',
         port: '',
         search: ''
@@ -20,7 +14,7 @@ const nextConfig: NextConfig = {
     ]
   },
   turbopack: {
-    root: path.join(__dirname, '..')
+    root: path.resolve(__dirname)
   }
 };
 

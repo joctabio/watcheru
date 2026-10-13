@@ -1,12 +1,13 @@
 import { Suspense } from 'react';
 import SearchResults from './search-results';
+import Loading from './loading';
 
 export default function Home() {
   return (
-    <Suspense>
-      <div className='flex flex-col gap-4 pt-[68px]'>
+    <Suspense fallback={<Loading />}>
+      <main>
         <SearchResults />
-      </div>
+      </main>
     </Suspense>
   );
 }

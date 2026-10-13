@@ -1,16 +1,7 @@
-import { Mirage } from 'ldrs/react';
-import 'ldrs/react/Mirage.css';
+import { Spinner } from './spinner';
 
-type SpinnerMirageProps = {
-  size?: string;
-  speed?: string;
-  color?: string;
-};
+type SpinnerMirageProps = { size?: string; speed?: string; color?: string };
 
-export default function SpinnerMirage({
-  size = '60',
-  speed = '2.5',
-  color = 'white'
-}: SpinnerMirageProps) {
-  return <Mirage size={size} speed={speed} color={color} />;
+export default function SpinnerMirage({ size = '24', speed = '1.1', color = 'currentColor' }: SpinnerMirageProps) {
+  return <Spinner size={Number(size)} style={{ animationDuration: `${speed}s`, color }} />;
 }

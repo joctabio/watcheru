@@ -1,4 +1,5 @@
 import Header from '@/components/header';
+import CinemaHeaderFallback from '@/components/cinema-header-fallback';
 import { Suspense } from 'react';
 
 export default function DirectoryLayout({
@@ -7,11 +8,9 @@ export default function DirectoryLayout({
   children: React.ReactNode;
 }) {
   return (
-    <Suspense>
-      <div>
-        <Header />
-        {children}
-      </div>
-    </Suspense>
+    <>
+      <Suspense fallback={<CinemaHeaderFallback />}><Header /></Suspense>
+      {children}
+    </>
   );
 }

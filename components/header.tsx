@@ -1,74 +1,96 @@
 'use client';
 
-import { redirect, useSearchParams } from 'next/navigation';
-import { ThemeToggle } from './theme-toggle';
-import { Controller, useForm } from 'react-hook-form';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useId, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import z from 'zod';
-import { Field, FieldGroup } from '@/components/ui/field';
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput
-} from '@/components/ui/input-group';
-import { IconSearch } from '@tabler/icons-react';
+import { z } from 'zod';
+import { ArrowRight, Search } from 'lucide-react';
+import Link from 'next/link';
+import { ThemeToggle } from './theme-toggle';
+import CinemaBrand from './cinema-brand';
+import { getMovieReturnDestination } from '@/lib/movie-navigation';
+import { Button } from './ui/button';
 
-const formSchema = z.object({
-  searchText: z.string().min(1)
-});
+const formSchema = z.object({ searchText: z.string().trim().min(1, 'Enter a movie title.') });
 
 export default function Header() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const searchText = searchParams.get('search');
-
-  const form = useForm<z.infer<typeof formSchema>>({
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const searchId = useId();
+  const errorId = `${searchId}-error`;
+  const searchText = searchParams.get('search') ?? getMovieReturnDestination(searchParams.get('from')).search;
+  const { register, handleSubmit, reset, setFocus, clearErrors, formState: { errors } } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      searchText: searchText || ''
-    }
+    defaultValues: { searchText: searchText || '' }
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    redirect(`/directory?search=${values.searchText}`);
-  };
+  useEffect(() => { reset({ searchText: searchText || '' }); }, [searchText, reset]);
+
+  useEffect(() => {
+    if (!searchOpen) {
+      clearErrors();
+      return;
+    }
+
+    setFocus('searchText');
+
+    function onPointerDown(event: PointerEvent) {
+      if (event.target instanceof Node && !searchRef.current?.contains(event.target)) {
+        setSearchOpen(false);
+      }
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setSearchOpen(false);
+        toggleRef.current?.focus();
+      }
+    }
+
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [searchOpen, setFocus, clearErrors]);
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    setSearchOpen(false);
+    toggleRef.current?.focus();
+    router.push(`/directory?${new URLSearchParams({ search: values.searchText })}`);
+  }
 
   return (
-    <div className='fixed top-0 w-full z-50 flex items-center justify-between gap-4 backdrop-blur-2xl'>
-      <div className='flex px-6 py-4 w-full gap-5'>
-        <div className='flex w-full items-center gap-5'>
-          <a href={'/'} title={'Watcheru homepage'}>
-            <span className='font-bold'>Watcheru</span>
-          </a>
-          <div className='flex gap-3 w-full'>
-            <form onSubmit={form.handleSubmit(onSubmit)} className='w-full'>
-              <FieldGroup>
-                <Controller
-                  name='searchText'
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <div className='flex gap-2 justify-end'>
-                        <InputGroup className='flex-1 max-w-2xs'>
-                          <InputGroupAddon>
-                            <IconSearch />
-                          </InputGroupAddon>
-                          <InputGroupInput
-                            {...field}
-                            aria-invalid={fieldState.invalid}
-                            autoComplete='off'
-                            placeholder='Search movies...'
-                          />
-                        </InputGroup>
-                      </div>
-                    </Field>
-                  )}
-                />
-              </FieldGroup>
-            </form>
-          </div>
+    <header className='cinema-header' data-search-open={searchOpen}>
+      <div className='header-inner'>
+        <Link href='/' className='brand' aria-label='Watcheru home'><CinemaBrand /></Link>
+        <nav className='header-nav' aria-label='Main navigation'>
+          <Link href='/' aria-current={pathname === '/' ? 'page' : undefined}>Discover</Link>
+          <Link href='/watchlist' aria-current={pathname === '/watchlist' ? 'page' : undefined}>Saved movies</Link>
+        </nav>
+        <div className='header-search' data-open={searchOpen} ref={searchRef} onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setSearchOpen(false);
+        }}>
+          <form id={searchId} inert={!searchOpen} aria-hidden={!searchOpen} onSubmit={(event) => { void handleSubmit(onSubmit)(event); }} className='header-search-panel' role='search'>
+            <div className='search-shell'>
+              <input {...register('searchText')} aria-label='Search movies by title' aria-invalid={!!errors.searchText} aria-describedby={errors.searchText ? errorId : undefined} autoComplete='off' placeholder='Search movies…' />
+              <button type='submit' aria-label='Search movies'><ArrowRight size={18} aria-hidden='true' /></button>
+            </div>
+            {errors.searchText && <span id={errorId} role='alert' className='search-error'>{errors.searchText.message}</span>}
+          </form>
+          <Button ref={toggleRef} type='button' variant='ghost' size='icon-lg' className='header-search-toggle' aria-label={searchOpen ? 'Close movie search' : 'Open movie search'} aria-expanded={searchOpen} aria-controls={searchId} onClick={() => setSearchOpen((open) => !open)}>
+            <Search size={20} className='size-5' aria-hidden='true' />
+          </Button>
         </div>
-        <ThemeToggle />
+        <div className='header-theme'><ThemeToggle /></div>
       </div>
-    </div>
+    </header>
   );
 }
