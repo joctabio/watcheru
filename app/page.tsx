@@ -73,7 +73,7 @@ export default function Home() {
   }
 
   const pickControls = (
-    <ResponsivePickActions>
+    <ResponsivePickActions sticky={Boolean(movie)}>
       <div className='picker-controls'>
         {movie && <Button type='button' variant='ghost' className='previous-pick' aria-label='Previous pick' title='Previous pick' disabled={history.index <= 0 || picker.isPending} onClick={() => dispatch({ type: 'previous' })}>
           <ArrowLeft size={20} className='size-5' aria-hidden='true' /><span className='previous-pick-label'>Previous pick</span>
