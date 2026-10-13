@@ -163,8 +163,8 @@
 .filter-toggle { width: 52px; color: var(--muted-foreground); }
 .filter-toggle[aria-expanded='true'] { border-color: var(--primary); background: var(--accent); color: var(--primary); }
 .pick-button { padding-inline: 28px; font-size: 16px; letter-spacing: 0; font-weight: 600; }
-.picker-note { margin-top: 18px; text-align: center; font-size: 14px; color: var(--muted-foreground); }
-.cinema-footer { flex-shrink: 0; width: 100%; max-width: 1280px; margin: 0 auto; padding: 25px 40px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; color: var(--muted-foreground); font-size: 13px; }
+.picker-note { margin-top: 32px; text-align: center; font-size: 14px; color: var(--muted-foreground); }
+.cinema-footer { flex-shrink: 0; width: 100%; max-width: 1280px; margin: 0 auto; padding: 25px 40px; padding-bottom: calc(25px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--border); display: flex; justify-content: flex-end; color: var(--muted-foreground); font-size: 13px; }
 .cinema-footer a:hover { color: var(--primary); }
 
 .preferences { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
@@ -240,7 +240,7 @@ select.cinema-field { appearance: none; padding-right: 46px; background-image: v
 
 .programme-shell { max-width: 1280px; margin: auto; padding: 48px 40px 64px; min-height: 70vh; }
 .programme-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 36px; border-bottom: 1px solid var(--border); padding-bottom: 28px; }
-.collection-heading { border-bottom: 0; }
+.collection-heading { border-bottom: 0; padding-bottom: 0; margin-bottom: 24px; }
 .programme-heading h1 { margin-top: 12px; font-size: clamp(2.4rem, 5vw, 4rem); overflow-wrap: anywhere; }
 .programme-heading p { margin-top: 14px; font-size: 15px; color: var(--muted-foreground); }
 .layout-switch { display: inline-flex; gap: 4px; flex-shrink: 0; }
@@ -353,6 +353,18 @@ select.cinema-field { appearance: none; padding-right: 46px; background-image: v
   .poster-title { font-size: 18px; }
   .poster-hover { display: none; }
   .cinema-footer { padding-inline: 24px; font-size: 13px; }
+}
+@media (max-width: 639px) {
+  .picker-desk:not(.picker-desk-initial) { margin-top: 28px; margin-bottom: 40px; }
+  .picker-desk:not(.picker-desk-initial) .picker-controls { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .picker-desk:not(.picker-desk-initial) .picker-pick-group { display: grid; grid-template-columns: 52px minmax(0, 1fr); width: 100%; min-width: 0; margin-left: 0; grid-row: 1; }
+  .picker-desk:not(.picker-desk-initial) .pick-button { width: 100%; min-width: 0; padding-inline: 16px; }
+  .picker-desk:not(.picker-desk-initial) .filter-toggle { width: 52px; }
+  .picker-desk:not(.picker-desk-initial) .previous-pick { grid-row: 2; justify-self: start; }
+  .picker-note { line-height: 1.6; }
+  .film-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .film-actions .cinema-button { min-width: 0; padding-inline: 10px; white-space: normal; height: auto; min-height: 44px; }
+  .film-actions .film-more-info { grid-column: 1 / -1; justify-self: start; margin-left: 0; }
 }
 @media (max-width: 479px) {
   .cinema-header[data-search-open='true'] .header-theme { order: 0; margin-left: auto; }

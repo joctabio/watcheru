@@ -20,7 +20,7 @@ export default function WatchlistPage() {
       <main className='programme-shell'>
         <div className='programme-heading collection-heading'>
           <div>
-            <h1>Your collection</h1>
+            <h1>Watchlist</h1>
           </div>
           <Bookmark size={24} strokeWidth={1} className='mb-2 shrink-0 text-primary' aria-hidden='true' />
         </div>

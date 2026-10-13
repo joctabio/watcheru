@@ -73,7 +73,7 @@ export default function Header() {
         <Link href='/' className='brand' aria-label='Watcheru home'><CinemaBrand /></Link>
         <nav className='header-nav' aria-label='Main navigation'>
           <Link href='/' aria-current={pathname === '/' ? 'page' : undefined}>Discover</Link>
-          <Link href='/watchlist' aria-current={pathname === '/watchlist' ? 'page' : undefined}>Saved movies</Link>
+          <Link href='/watchlist' aria-current={pathname === '/watchlist' ? 'page' : undefined}>Watchlist</Link>
         </nav>
         <div className='header-search' data-open={searchOpen} ref={searchRef} onBlur={(event) => {
           if (!event.currentTarget.contains(event.relatedTarget)) setSearchOpen(false);

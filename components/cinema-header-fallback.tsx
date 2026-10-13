@@ -9,7 +9,7 @@ export default function CinemaHeaderFallback() {
         <Link href='/' className='brand' aria-label='Watcheru home'><CinemaBrand /></Link>
         <nav className='header-nav' aria-label='Main navigation'>
           <Link href='/'>Discover</Link>
-          <Link href='/watchlist'>Saved movies</Link>
+          <Link href='/watchlist'>Watchlist</Link>
         </nav>
         <div className='header-search'>
           <button type='button' className='header-search-toggle' disabled aria-label='Loading movie search'><Search size={20} aria-hidden='true' /></button>

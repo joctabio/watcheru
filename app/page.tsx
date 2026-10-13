@@ -46,14 +46,14 @@ export default function Home() {
 
   const pickControls = (
     <div className='picker-controls'>
-      {movie && <Button type='button' variant='ghost' disabled={history.index <= 0 || picker.isPending} onClick={() => dispatch({ type: 'previous' })}>
+      {movie && <Button type='button' variant='ghost' className='previous-pick' disabled={history.index <= 0 || picker.isPending} onClick={() => dispatch({ type: 'previous' })}>
         <ArrowLeft size={14} />Previous pick
       </Button>}
       <div className='picker-pick-group' role='group' aria-label='Pick a movie and adjust filters'>
-        <PickButton pending={picker.isPending} hasMovie={Boolean(movie)} formId={pickerFormId} />
         <Button type='button' variant='outline' size='icon-lg' className='filter-toggle' disabled={picker.isPending} aria-label='Filters for the next movie pick' title='Filters for the next pick' aria-expanded={filtersOpen} aria-controls={filtersId} onClick={() => setFiltersOpen((open) => !open)}>
           <SlidersHorizontal size={20} className='size-5' aria-hidden='true' />
         </Button>
+        <PickButton pending={picker.isPending} hasMovie={Boolean(movie)} formId={pickerFormId} />
       </div>
     </div>
   );
