@@ -227,10 +227,10 @@ select.cinema-field { appearance: none; padding-right: 46px; background-image: v
 .film-actions-watchlist .cinema-button { min-height: 44px; }
 .film-heading .film-actions .cinema-button { min-height: 44px; }
 .film-more-info { margin-left: auto; }
-.film-result-actions { display: flex; align-items: flex-start; justify-content: flex-start; gap: 10px; margin-top: 24px; }
-.film-result-actions > div { min-width: 0; }
-.film-result-actions .film-actions { display: flex; margin: 0; }
-.film-result-actions .cinema-button { height: 44px; min-height: 44px; font-size: 15px; }
+.film-result-actions { display: flex; flex-wrap: wrap; align-items: stretch; justify-content: flex-start; gap: 10px; margin-top: 24px; }
+.film-result-actions > div { flex: 1 1 330px; min-width: 0; }
+.film-result-actions .film-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.film-result-actions .cinema-button { height: auto; min-height: 44px; font-size: 15px; white-space: normal; }
 .film-result-actions .film-more-info { margin-left: 0; }
 .movie-pick-transition { opacity: 1; transition: opacity .35s ease; }
 .movie-pick-transition[data-loading='true'] { opacity: 0; transition-duration: .16s; pointer-events: none; }
@@ -434,6 +434,7 @@ select.cinema-field { appearance: none; padding-right: 46px; background-image: v
   .film-stat span { font-size: 12px; }
   .film-actions .cinema-button { font-size: 14px; }
   .film-result-actions { flex-direction: column; align-items: stretch; }
+  .film-result-actions > div { flex: none; }
   .film-result-actions .cinema-button { width: 100%; font-size: 14px; padding-inline: 12px; }
   .poster-placeholder { font-size: 13px; }
   .film-extras { font-size: 15px; }

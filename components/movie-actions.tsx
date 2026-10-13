@@ -16,8 +16,8 @@ export default function MovieActions({ movie, allowMarkWatched = false, showSave
           <Bookmark size={18} className='size-[18px]' fill={isSaved ? 'currentColor' : 'none'} aria-hidden='true' />
           {showSaveLabel && (isSaved ? 'Saved' : 'Add to watchlist')}
         </Button>
-        {allowMarkWatched && (isSaved || isWatched) && <Button type='button' variant='ghost' aria-pressed={isWatched} onClick={() => toggle(movie, 'watched')} aria-label={isWatched ? `Mark ${movie.title} as unwatched` : `Mark ${movie.title} as watched`}>
-          <Check size={14} />{isWatched ? 'Watched' : 'Mark as watched'}
+        {allowMarkWatched && <Button type='button' variant='outline' aria-pressed={isWatched} onClick={() => toggle(movie, 'watched')} aria-label={isWatched ? `Mark ${movie.title} as unwatched` : `Mark ${movie.title} as watched`}>
+          <Check size={18} className='size-[18px]' aria-hidden='true' />{isWatched ? 'Watched' : 'Mark as watched'}
         </Button>}
       </div>
       {storageError && <div role='alert' className='mt-2 text-sm text-destructive'>{storageError}</div>}

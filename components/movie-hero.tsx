@@ -44,7 +44,7 @@ export default function MovieHero({ movie, genres, runtime, detailsHref, variant
               <div className='film-stat'><strong>{movie.popularity.toFixed(0)}</strong><span>Popularity</span></div>
             </div>
             {variant === 'card' && <div className='film-result-actions film-actions-reveal'>
-              <MovieActions movie={movie} showSaveLabel />
+              <MovieActions movie={movie} showSaveLabel allowMarkWatched />
               {detailsHref && <Button variant='outline' className='film-more-info' asChild>
                 <Link href={detailsHref}><Info size={16} aria-hidden='true' />More info</Link>
               </Button>}
