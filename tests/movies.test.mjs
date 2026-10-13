@@ -29,12 +29,15 @@ test('random picks use the available page count and pass all preferences', async
   const tmdb = service(async (endpoint) => {
     const url = new URL(endpoint, 'https://example.test');
     urls.push(url);
+    if (url.pathname.startsWith('/movie/')) return { runtime: 110 };
     return url.searchParams.get('page') === '1' ? page([{ id: 1 }], 2) : page([{ id: 2 }], 2);
   });
   const result = await tmdb.fetchRandomMovie({ genre: 28, language: 'tl', year: 2020, maxRuntime: 120, minRating: 7 });
   assert.equal(result.id, 2);
-  assert.deepEqual(urls.map((url) => url.searchParams.get('page')), ['1', '2']);
-  for (const url of urls) {
+  assert.equal(result.runtime, 110);
+  assert.equal(urls.at(-1).pathname, '/movie/2');
+  assert.deepEqual(urls.slice(0, -1).map((url) => url.searchParams.get('page')), ['1', '2']);
+  for (const url of urls.slice(0, -1)) {
     for (const [key, value] of Object.entries({ with_genres: '28', with_original_language: 'tl', primary_release_year: '2020', 'with_runtime.gte': '1', 'with_runtime.lte': '120', 'vote_average.gte': '7', 'vote_count.gte': '50', include_adult: 'false' })) {
       assert.equal(url.searchParams.get(key), value);
     }
@@ -45,6 +48,7 @@ test('random picks cap TMDB discovery at page 500', async (t) => {
   t.mock.method(Math, 'random', () => 0.9999);
   const pages = [];
   const tmdb = service(async (endpoint) => {
+    if (endpoint.startsWith('/movie/')) return { runtime: 110 };
     pages.push(Number(new URL(endpoint, 'https://example.test').searchParams.get('page')));
     return page([{ id: 1 }], 1000);
   });
@@ -55,7 +59,11 @@ test('random picks cap TMDB discovery at page 500', async (t) => {
 test('a one-page result reuses the initial request and excludes watched/recent movies', async (t) => {
   t.mock.method(Math, 'random', () => 0);
   let calls = 0;
-  const tmdb = service(async () => { calls++; return page([{ id: 1 }, { id: 2 }, { id: 3 }]); });
+  const tmdb = service(async (endpoint) => {
+    if (endpoint.startsWith('/movie/')) return { runtime: 110 };
+    calls++;
+    return page([{ id: 1 }, { id: 2 }, { id: 3 }]);
+  });
   assert.equal((await tmdb.fetchRandomMovie({}, [1, 2])).id, 3);
   assert.equal(calls, 1);
 });
@@ -64,6 +72,7 @@ test('picker tries another page when the chosen page contains only excluded titl
   t.mock.method(Math, 'random', () => 0.75);
   const pages = [];
   const tmdb = service(async (endpoint) => {
+    if (endpoint.startsWith('/movie/')) return { runtime: 110 };
     const selected = Number(new URL(endpoint, 'https://example.test').searchParams.get('page'));
     pages.push(selected);
     return page([{ id: selected === 1 ? 3 : 2 }], 2);
@@ -75,6 +84,18 @@ test('picker tries another page when the chosen page contains only excluded titl
 test('empty filters and exhausted results have actionable errors', async () => {
   await assert.rejects(service(async () => page([], 0)).fetchRandomMovie(), /broaden/i);
   await assert.rejects(service(async () => page([{ id: 1 }])).fetchRandomMovie({}, [1]), /new title/);
+});
+
+test('runtime lookup failures preserve the selected movie and unknown runtimes stay empty', async () => {
+  const failingRuntime = service(async (endpoint) => {
+    if (endpoint.startsWith('/movie/')) throw new Error('Metadata unavailable');
+    return page([{ id: 1 }]);
+  });
+  assert.deepEqual(await failingRuntime.fetchRandomMovie(), { id: 1, runtime: null });
+  for (const runtime of [null, 0, -1, 'unknown']) {
+    const tmdb = service(async (endpoint) => endpoint.startsWith('/movie/') ? { runtime } : page([{ id: 1 }]));
+    assert.equal((await tmdb.fetchRandomMovie()).runtime, null);
+  }
 });
 
 test('invalid preferences and oversized history fail before calling the API', async () => {

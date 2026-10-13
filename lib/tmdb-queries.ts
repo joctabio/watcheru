@@ -51,7 +51,14 @@ export async function fetchRandomMovie(filters: MovieFilters = {}, excludedIds: 
     params.set('vote_average.gte', String(minRating));
     params.set('vote_count.gte', '50');
   }
-  return fetchRandomDiscoverItem<MovieSummary>('/discover/movie', params, excluded.data);
+  const movie = await fetchRandomDiscoverItem<MovieSummary>('/discover/movie', params, excluded.data);
+  // Discovery omits runtime. Enrich the selected movie before revealing it,
+  // but keep the pick usable if this optional metadata request fails.
+  const details = await fetchTmdbApi<{ runtime: number | null }>(`/movie/${movie.id}`, {
+    signal: AbortSignal.timeout(3000)
+  }).catch(() => ({ runtime: null }));
+  const runtime = typeof details.runtime === 'number' && Number.isFinite(details.runtime) && details.runtime > 0 ? details.runtime : null;
+  return { ...movie, runtime };
 }
 
 export async function fetchRandomShow() {

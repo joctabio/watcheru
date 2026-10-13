@@ -25,7 +25,14 @@ export function MovieDetailsSkeleton() {
       <div className='feature-content' aria-hidden='true'>
         <div className='feature-poster skeleton-surface' />
         <div className='feature-copy'>
-          <h1><span className='skeleton-surface skeleton-heading' /></h1>
+          <div className='film-heading'>
+            <h1><span className='skeleton-surface skeleton-heading' /></h1>
+            <div className='hero-library-actions'>
+              <div className='film-actions'>
+                <div className='skeleton-surface skeleton-action skeleton-bookmark' />
+              </div>
+            </div>
+          </div>
           <div className='film-meta'><div className='skeleton-surface skeleton-line skeleton-meta' /></div>
           <div className='film-genres'><div className='skeleton-surface skeleton-line' /></div>
           <div className='film-synopsis'>
@@ -40,10 +47,6 @@ export function MovieDetailsSkeleton() {
                 <div className='skeleton-surface skeleton-line skeleton-caption' />
               </div>
             ))}
-          </div>
-          <div className='film-actions'>
-            <div className='skeleton-surface skeleton-action' />
-            <div className='skeleton-surface skeleton-action' />
           </div>
         </div>
       </div>

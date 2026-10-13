@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useId, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -37,8 +38,6 @@ export default function Header() {
       return;
     }
 
-    setFocus('searchText');
-
     function onPointerDown(event: PointerEvent) {
       if (event.target instanceof Node && !searchRef.current?.contains(event.target)) {
         setSearchOpen(false);
@@ -59,7 +58,7 @@ export default function Header() {
       document.removeEventListener('pointerdown', onPointerDown);
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [searchOpen, setFocus, clearErrors]);
+  }, [searchOpen, clearErrors]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setSearchOpen(false);
@@ -78,14 +77,24 @@ export default function Header() {
         <div className='header-search' data-open={searchOpen} ref={searchRef} onBlur={(event) => {
           if (!event.currentTarget.contains(event.relatedTarget)) setSearchOpen(false);
         }}>
-          <form id={searchId} inert={!searchOpen} aria-hidden={!searchOpen} onSubmit={(event) => { void handleSubmit(onSubmit)(event); }} className='header-search-panel' role='search'>
+          <form id={searchId} inert={!searchOpen} aria-hidden={!searchOpen} onTransitionEnd={(event) => {
+            if (searchOpen && event.target === event.currentTarget && event.propertyName === 'width' && document.activeElement === toggleRef.current) setFocus('searchText');
+          }} onSubmit={(event) => { void handleSubmit(onSubmit)(event); }} className='header-search-panel' role='search'>
             <div className='search-shell'>
               <input {...register('searchText')} aria-label='Search movies by title' aria-invalid={!!errors.searchText} aria-describedby={errors.searchText ? errorId : undefined} autoComplete='off' placeholder='Search movies…' />
               <button type='submit' aria-label='Search movies'><ArrowRight size={18} aria-hidden='true' /></button>
             </div>
             {errors.searchText && <span id={errorId} role='alert' className='search-error'>{errors.searchText.message}</span>}
           </form>
-          <Button ref={toggleRef} type='button' variant='ghost' size='icon-lg' className='header-search-toggle' aria-label={searchOpen ? 'Close movie search' : 'Open movie search'} aria-expanded={searchOpen} aria-controls={searchId} onClick={() => setSearchOpen((open) => !open)}>
+          <Button ref={toggleRef} type='button' variant='ghost' size='icon-lg' className='header-search-toggle' aria-label={searchOpen ? 'Close movie search' : 'Open movie search'} aria-expanded={searchOpen} aria-controls={searchId} onClick={() => {
+            if (searchOpen) {
+              setSearchOpen(false);
+              return;
+            }
+            // Focus within the tap gesture so iOS can open the keyboard.
+            flushSync(() => setSearchOpen(true));
+            setFocus('searchText');
+          }}>
             <Search size={20} className='size-5' aria-hidden='true' />
           </Button>
         </div>

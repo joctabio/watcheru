@@ -33,6 +33,10 @@ export function useMovieLibrary() {
       // Read the current value so multiple cards and tabs don't overwrite each other.
       const current = parseMovieLibrary(window.localStorage.getItem(storageKey));
       const exists = current[collection].some((item) => item.id === movie.id);
+      if (collection === 'watched' && !exists && !current.saved.some((item) => item.id === movie.id)) {
+        setStorageError('Save this movie to your watchlist before marking it as watched.');
+        return;
+      }
       const limit = collection === 'saved' ? 200 : 400;
       if (!exists && current[collection].length >= limit) {
         setStorageError(`Your ${collection} list is full (${limit} movies). Remove a movie before adding another.`);

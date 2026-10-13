@@ -35,7 +35,7 @@ export default function WatchlistPage() {
             <p>{collection === 'saved' ? 'Save movies to find them here later.' : 'Mark movies as watched to exclude them from new picks.'}</p>
             <Button className='pick-button mt-2' asChild><Link href='/'>Discover movies<ArrowRight size={14} /></Link></Button>
           </section>
-        ) : <MovieList movies={movies} layout='list' showActions returnTo='/watchlist' />}
+        ) : <MovieList movies={movies} layout='list' showActions allowMarkWatched returnTo='/watchlist' />}
         <p className='mt-8 text-sm text-muted-foreground'>Saved in this browser. Watched films are excluded from new picks.</p>
       </main>
     </>

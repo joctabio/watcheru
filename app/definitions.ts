@@ -14,7 +14,7 @@ export type Movie = {
   vote_count: number;
 };
 
-export type MovieSummary = Movie & { genre_ids: number[] };
+export type MovieSummary = Movie & { genre_ids: number[]; runtime?: number | null };
 
 export type MovieDetails = Movie & {
   genres: Genre[];
