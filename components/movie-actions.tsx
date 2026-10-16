@@ -7,7 +7,8 @@ import { Bookmark, Check, Plus, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 
 export default function MovieActions({ movie, allowMarkWatched = false, showSaveLabel = allowMarkWatched, watchlistCollection }: { movie: Movie; allowMarkWatched?: boolean; showSaveLabel?: boolean; watchlistCollection?: keyof MovieLibrary }) {
-  const { saved, watched, toggle, storageError, isBusy } = useMovieLibrary();
+  const { saved, watched, toggle, storageError, isMovieBusy } = useMovieLibrary();
+  const isBusy = isMovieBusy(movie.id);
   const isSaved = saved.some((item) => item.id === movie.id);
   const isWatched = watched.some((item) => item.id === movie.id);
   if (watchlistCollection) {

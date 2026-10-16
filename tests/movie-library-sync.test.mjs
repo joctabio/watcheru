@@ -14,33 +14,43 @@ function harness(t, services = {}) {
     localStorage: { getItem: () => stored, setItem: (_, value) => { stored = value; } },
     dispatchEvent: () => {}
   };
-  const state = { query: null, mutation: null, error: null, cache: { saved: [], watched: [] }, user: { id: 'account-a' } };
+  const state = { query: null, mutation: null, error: null, cache: { saved: [], watched: [] }, user: { id: 'account-a' }, changes: [], queryFlags: {} };
+  const hookState = [];
+  let stateIndex = 0;
+  const mutationLocks = { current: new Set() };
   const queryClient = {
     cancelQueries: async () => {},
     getQueryData: () => state.cache,
-    setQueryData: (_key, value) => { state.cache = value; },
+    setQueryData: (_key, value) => { state.cache = typeof value === 'function' ? value(state.cache) : value; },
     invalidateQueries: async (filter) => { state.invalidated = filter.queryKey; },
     removeQueries: () => {}
   };
   const { MovieLibraryProvider } = loadTs('lib/use-movie-library.tsx', {
     react: {
       createContext: () => ({ Provider: {} }), useEffect: () => {},
-      useMemo: (fn) => fn(), useRef: (current) => ({ current }),
-      useState: () => [state.error, (value) => { state.error = value; }],
+      useMemo: (fn) => fn(), useRef: () => mutationLocks,
+      useState: (initial) => {
+        const index = stateIndex++;
+        if (!(index in hookState)) hookState[index] = typeof initial === 'function' ? initial() : initial;
+        return [hookState[index], (value) => {
+          hookState[index] = value;
+          if (index === 0) state.error = value;
+        }];
+      },
       useSyncExternalStore: (_, snapshot) => snapshot()
     },
     'react/jsx-runtime': { jsx: (_, props) => props.value },
     '@tanstack/react-query': {
       useQueryClient: () => queryClient,
-      useQuery: (options) => { state.query = options; return { data: state.cache, isSuccess: true }; },
-      useMutation: (options) => { state.mutation = options; return {}; }
+      useQuery: (options) => { state.query = options; return { data: state.cache, isSuccess: true, isPending: false, isFetching: false, isError: false, ...state.queryFlags }; },
+      useMutation: (options) => { state.mutation = options; return { mutate: (change) => state.changes.push(change) }; }
     },
     '@/components/auth-provider': { useAuth: () => ({ user: state.user, loading: false }) },
     './supabase': { getSupabase: () => ({}) },
     './movie-library': libraryModule,
     './cloud-movie-library': { ...cloudModule, ...services }
   });
-  return { state, render: () => MovieLibraryProvider({ children: null }), stored: () => stored, setStored: (value) => { stored = value; } };
+  return { state, render: () => { stateIndex = 0; return MovieLibraryProvider({ children: null }); }, stored: () => stored, setStored: (value) => { stored = value; } };
 }
 
 test('cloud watched moves optimistically update both collections and roll back both on failure', async (t) => {
@@ -123,4 +133,50 @@ test('cloud moves back to saved clear watched membership and roll back on failur
   assert.deepEqual(h.state.cache, { saved: [movie], watched: [] });
   h.state.mutation.onError(new Error('offline'), change, context);
   assert.deepEqual(h.state.cache, { saved: [], watched: [movie] });
+});
+
+
+test('removals from either collection are optimistic and reversible on API failure', async (t) => {
+  const h = harness(t);
+  for (const collection of ['saved', 'watched']) {
+    h.state.cache = { saved: [], watched: [], [collection]: [movie] };
+    h.render().toggle(movie, collection);
+    const change = h.state.changes.at(-1);
+    assert.equal(change.present, false);
+    const context = await h.state.mutation.onMutate(change);
+    assert.deepEqual(h.state.cache, { saved: [], watched: [] });
+    h.state.mutation.onError(new Error('offline'), change, context);
+    assert.deepEqual(h.state.cache[collection], [movie]);
+    await h.state.mutation.onSettled(null, new Error('offline'), change);
+  }
+});
+
+test('saving one movie leaves other rows usable and rollback preserves their optimistic changes', async (t) => {
+  const h = harness(t);
+  const other = { ...movie, id: 2, title: 'Other film' };
+  h.state.cache = { saved: [movie, other], watched: [] };
+  h.state.queryFlags = { isFetching: true };
+  h.render().toggle(movie, 'watched');
+  const first = h.state.changes[0];
+  const firstContext = await h.state.mutation.onMutate(first);
+  const pending = h.render();
+  assert.equal(pending.isLoading, false);
+  assert.equal(pending.isMovieBusy(movie.id), true);
+  assert.equal(pending.isMovieBusy(other.id), false);
+  assert.equal(h.state.query.refetchOnWindowFocus(), false);
+  assert.equal(h.state.query.refetchOnReconnect(), false);
+  pending.toggle(movie, 'saved');
+  assert.equal(h.state.changes.length, 1, 'same movie cannot submit conflicting writes');
+  pending.toggle(other, 'watched');
+  const second = h.state.changes[1];
+  await h.state.mutation.onMutate(second);
+  h.state.mutation.onError(new Error('offline'), first, firstContext);
+  assert.deepEqual(h.state.cache, { saved: [movie], watched: [other] });
+  await h.state.mutation.onSettled(null, new Error('offline'), first);
+  assert.equal(h.state.invalidated, undefined, 'wait for all writes before refetching');
+  await h.state.mutation.onSettled(null, null, second);
+  assert.deepEqual(h.state.invalidated, ['movie-library', 'account-a']);
+  assert.equal(h.render().isMovieBusy(movie.id), false);
+  assert.equal(h.render().isMovieBusy(other.id), false);
+  assert.equal(h.state.query.refetchOnWindowFocus(), true);
 });

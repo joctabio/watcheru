@@ -19,7 +19,7 @@ export default function WatchlistPage() {
 }
 
 function WatchlistContent() {
-  const { saved, watched, isLoading, isFetching, storageError, retry } = useMovieLibrary();
+  const { saved, watched, isLoading, storageError, retry } = useMovieLibrary();
   const { user } = useAuth();
   const [collection, setCollection] = useState<'saved' | 'watched'>('saved');
   const visible = useWatchlistVisit(saved, watched);
@@ -39,7 +39,7 @@ function WatchlistContent() {
           <button type='button' aria-pressed={collection === 'saved'} onClick={() => setCollection('saved')}>Saved<span>{saved.length}</span></button>
           <button type='button' aria-pressed={collection === 'watched'} onClick={() => setCollection('watched')}>Watched<span>{watched.length}</span></button>
         </div>
-        {isLoading || isFetching ? <MovieResultsSkeleton layout='list' showActions label='Loading your watchlist' /> : movies.length === 0 ? (
+        {isLoading ? <MovieResultsSkeleton layout='list' showActions label='Loading your watchlist' /> : movies.length === 0 ? (
           <section className='empty-screen'>
             <Bookmark size={36} strokeWidth={1.5} />
             <h2>{collection === 'saved' ? 'No saved movies yet' : 'No watched movies yet'}</h2>

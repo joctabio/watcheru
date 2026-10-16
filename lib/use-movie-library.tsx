@@ -38,6 +38,7 @@ type LibraryContext = MovieLibrary & {
   isLoading: boolean;
   isFetching: boolean;
   isBusy: boolean;
+  isMovieBusy: (movieId: number) => boolean;
   retry: () => void;
 };
 const LibraryContext = createContext<LibraryContext | null>(null);
@@ -48,16 +49,22 @@ export function MovieLibraryProvider({ children }: { children: React.ReactNode }
   const raw = useSyncExternalStore(subscribe, getSnapshot, () => null);
   const guest = useMemo(() => parseMovieLibrary(raw), [raw]);
   const [storageError, setStorageError] = useState<string | null>(null);
-  const mutationLock = useRef(false);
+  const mutationLocks = useRef(new Set<string>());
+  const [pendingMovies, setPendingMovies] = useState<Set<string>>(() => new Set());
   useEffect(() => {
     queryClient.removeQueries({ queryKey: ['movie-library'], predicate: (query) => query.queryKey[1] !== user?.id });
   }, [user?.id, queryClient]);
+
+  function hasPendingChanges(userId: string | undefined) {
+    return !!userId && [...mutationLocks.current].some((key) => key.startsWith(`${userId}:`));
+  }
 
   const cloud = useQuery({
     queryKey: ['movie-library', user?.id],
     enabled: !!user && !loading,
     staleTime: 0,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: () => !hasPendingChanges(user?.id),
+    refetchOnReconnect: () => !hasPendingChanges(user?.id),
     retry: 1,
     queryFn: async ({ signal }) => {
       const client = getSupabase()!;
@@ -89,23 +96,39 @@ export function MovieLibraryProvider({ children }: { children: React.ReactNode }
       if (previous) queryClient.setQueryData(key, changeMovieMembership(previous, change.movie, change.collection, change.present));
       return { previous, key };
     },
-    onError: (_error, _change, context) => {
-      if (context?.previous) queryClient.setQueryData(context.key, context.previous);
+    onError: (_error, change, context) => {
+      if (context?.previous) {
+        const previous = context.previous;
+        // Roll back only this movie; other rows may have saved in the meantime.
+        queryClient.setQueryData<MovieLibrary>(context.key, (current) => current ? {
+          saved: [...previous.saved.filter((movie) => movie.id === change.movie.id), ...current.saved.filter((movie) => movie.id !== change.movie.id)],
+          watched: [...previous.watched.filter((movie) => movie.id === change.movie.id), ...current.watched.filter((movie) => movie.id !== change.movie.id)]
+        } : current);
+      }
       setStorageError('Could not save your change to your account. Check your connection and try again.');
     },
     onSettled: async (_data, _error, change) => {
-      await queryClient.invalidateQueries({ queryKey: ['movie-library', change.userId] });
-      mutationLock.current = false;
+      mutationLocks.current.delete(`${change.userId}:${change.movie.id}`);
+      setPendingMovies(new Set(mutationLocks.current));
+      // Avoid replacing another movie's optimistic state with a partial server snapshot.
+      if (!hasPendingChanges(change.userId)) {
+        await queryClient.invalidateQueries({ queryKey: ['movie-library', change.userId] });
+      }
     }
   });
 
   const library = loading ? emptyLibrary : user ? cloud.data ?? emptyLibrary : guest;
-  const isBusy = loading || mutation.isPending || (!!user && (cloud.isFetching || !cloud.data || cloud.isError));
+  const isBusy = loading || (!!user && !cloud.data);
+
+  function isMovieBusy(movieId: number) {
+    return isBusy || (!!user && pendingMovies.has(`${user.id}:${movieId}`));
+  }
 
   function toggle(movie: Movie, collection: Collection) {
-    if (isBusy || mutationLock.current) return;
+    const lockKey = user ? `${user.id}:${movie.id}` : '';
+    if (isBusy || mutationLocks.current.has(lockKey)) return;
     try {
-      const current = user ? library : parseMovieLibrary(window.localStorage.getItem(storageKey));
+      const current = user ? queryClient.getQueryData<MovieLibrary>(['movie-library', user.id]) ?? library : parseMovieLibrary(window.localStorage.getItem(storageKey));
       const exists = current[collection].some((item) => item.id === movie.id);
       const limit = collectionLimits[collection];
       if (!exists && current[collection].length >= limit) {
@@ -115,7 +138,8 @@ export function MovieLibraryProvider({ children }: { children: React.ReactNode }
       setStorageError(null);
       if (user) {
         const parsed = movieSchema.parse(movie);
-        mutationLock.current = true;
+        mutationLocks.current.add(lockKey);
+        setPendingMovies(new Set(mutationLocks.current));
         mutation.mutate({ userId: user.id, movie: parsed, collection, present: !exists });
       } else {
         writeGuest(changeMovieMembership(current, movie, collection, !exists));
@@ -129,8 +153,8 @@ export function MovieLibraryProvider({ children }: { children: React.ReactNode }
   return <LibraryContext.Provider value={{
     ...library, toggle, storageError: storageError ?? error,
     isLoading: loading || (!!user && cloud.isPending),
-    isFetching: !!user && cloud.isFetching, isBusy,
-    retry: () => { setStorageError(null); void cloud.refetch(); }
+    isFetching: !!user && cloud.isFetching, isBusy, isMovieBusy,
+    retry: () => { if (!hasPendingChanges(user?.id)) { setStorageError(null); void cloud.refetch(); } }
   }}>{children}</LibraryContext.Provider>;
 }
 

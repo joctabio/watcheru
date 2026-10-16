@@ -11,7 +11,7 @@ test('watched controls are opt-in, work without saving, and can be undone', () =
   let library = { saved: [movie], watched: [] };
   const { Button } = loadTs('components/ui/button.tsx', { '@/lib/utils': loadTs('lib/utils.ts') });
   const MovieActions = loadTs('components/movie-actions.tsx', {
-    '@/lib/use-movie-library': { useMovieLibrary: () => ({ ...library, toggle() {}, storageError: null }) },
+    '@/lib/use-movie-library': { useMovieLibrary: () => ({ ...library, toggle() {}, storageError: null, isMovieBusy: () => false }) },
     './ui/button': { Button }
   }).default;
   const render = (allowMarkWatched = false) => renderToStaticMarkup(createElement(MovieActions, { movie, allowMarkWatched }));
@@ -33,7 +33,7 @@ test('each watchlist tab offers exactly its move and remove actions, with restor
   let library = { saved: [movie], watched: [] };
   const { Button } = loadTs('components/ui/button.tsx', { '@/lib/utils': loadTs('lib/utils.ts') });
   const MovieActions = loadTs('components/movie-actions.tsx', {
-    '@/lib/use-movie-library': { useMovieLibrary: () => ({ ...library, toggle() {}, storageError: null }) },
+    '@/lib/use-movie-library': { useMovieLibrary: () => ({ ...library, toggle() {}, storageError: null, isMovieBusy: () => false }) },
     './ui/button': { Button }
   }).default;
   const render = (watchlistCollection) => renderToStaticMarkup(createElement(MovieActions, { movie, watchlistCollection }));
@@ -115,6 +115,7 @@ test('tab actions move a movie in either direction and Remove restores the corre
   const MovieActions = loadTs('components/movie-actions.tsx', {
     '@/lib/use-movie-library': { useMovieLibrary: () => ({
       ...library,
+      isMovieBusy: () => false,
       toggle: (film, collection) => {
         const present = !library[collection].some((item) => item.id === film.id);
         library = libraryModule.changeMovieMembership(library, film, collection, present);
