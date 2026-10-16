@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Store only the fields needed to show saved movies, not credits or videos.
-const movieSchema = z.object({
+export const movieSchema = z.object({
   id: z.number().int().positive(),
   title: z.string(),
   adult: z.boolean(),
@@ -25,11 +25,28 @@ export const librarySchema = z.object({
 export type MovieLibrary = z.infer<typeof librarySchema>;
 export const emptyLibrary: MovieLibrary = { saved: [], watched: [] };
 
+// Prefer Watched when importing an older library that allowed both memberships.
+export function normalizeMovieLibrary(library: MovieLibrary): MovieLibrary {
+  const watched = [...new Map(library.watched.map((movie) => [movie.id, movie])).values()];
+  const watchedIds = new Set(watched.map((movie) => movie.id));
+  const saved = [...new Map(library.saved.filter((movie) => !watchedIds.has(movie.id)).map((movie) => [movie.id, movie])).values()];
+  return { saved, watched };
+}
+
+export function changeMovieMembership(library: MovieLibrary, movie: MovieLibrary['saved'][number], collection: keyof MovieLibrary, present: boolean): MovieLibrary {
+  const others = library[collection].filter((item) => item.id !== movie.id);
+  return librarySchema.parse({
+    ...library,
+    [collection]: present ? [movie, ...others] : others,
+    ...(present ? { [collection === 'saved' ? 'watched' : 'saved']: library[collection === 'saved' ? 'watched' : 'saved'].filter((item) => item.id !== movie.id) } : {})
+  });
+}
+
 export function parseMovieLibrary(raw: string | null): MovieLibrary {
   if (!raw) return emptyLibrary;
   try {
     const parsed = librarySchema.safeParse(JSON.parse(raw));
-    return parsed.success ? parsed.data : emptyLibrary;
+    return parsed.success ? normalizeMovieLibrary(parsed.data) : emptyLibrary;
   } catch {
     return emptyLibrary;
   }

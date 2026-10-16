@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowRight, Search } from 'lucide-react';
 import Link from 'next/link';
-import { ThemeToggle } from './theme-toggle';
+import AccountMenu from './account-menu';
 import CinemaBrand from './cinema-brand';
 import { getMovieReturnDestination } from '@/lib/movie-navigation';
 import { Button } from './ui/button';
@@ -98,7 +98,7 @@ export default function Header() {
             <Search size={20} className='size-5' aria-hidden='true' />
           </Button>
         </div>
-        <div className='header-theme'><ThemeToggle /></div>
+        <div className='header-account'><AccountMenu /></div>
       </div>
     </header>
   );

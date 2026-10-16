@@ -5,11 +5,12 @@ import Link from 'next/link';
 import MovieActions from './movie-actions';
 import { movieDetailsHref } from '@/lib/movie-navigation';
 
-export default function MovieList({ movies, layout = 'grid', showActions = false, allowMarkWatched = false, returnTo }: {
+export default function MovieList({ movies, layout = 'grid', showActions = false, allowMarkWatched = false, watchlistCollection, returnTo }: {
   movies: Movie[];
   layout?: 'grid' | 'list';
   showActions?: boolean;
   allowMarkWatched?: boolean;
+  watchlistCollection?: 'saved' | 'watched';
   returnTo?: string;
 }) {
   const list = layout === 'list';
@@ -35,7 +36,7 @@ export default function MovieList({ movies, layout = 'grid', showActions = false
               {list && <p className='poster-description line-clamp-3'>{movie.overview || 'No synopsis available.'}</p>}
             </div>
           </Link>
-          {showActions && <MovieActions movie={movie} allowMarkWatched={allowMarkWatched} />}
+          {showActions && <MovieActions movie={movie} allowMarkWatched={allowMarkWatched} watchlistCollection={watchlistCollection} />}
         </li>
       ))}
     </ul>

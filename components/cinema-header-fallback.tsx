@@ -14,7 +14,7 @@ export default function CinemaHeaderFallback() {
         <div className='header-search'>
           <button type='button' className='header-search-toggle' disabled aria-label='Loading movie search'><Search size={20} aria-hidden='true' /></button>
         </div>
-        <div className='header-theme h-9 w-9' aria-hidden='true' />
+        <div className='header-account size-10' aria-hidden='true' />
       </div>
     </header>
   );

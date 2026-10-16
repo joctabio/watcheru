@@ -149,7 +149,7 @@ test('movie library retains saved/watched movies and strips large detail payload
   assert.equal(stored.saved[0].id, 1);
   assert.equal(stored.watched[0].id, 1);
   assert.equal('credits' in stored.saved[0], false);
-  assert.deepEqual(parseMovieLibrary(JSON.stringify(stored)), stored);
+  assert.deepEqual(parseMovieLibrary(JSON.stringify(stored)), { saved: [], watched: stored.watched });
 });
 
 function configureApi(t) {
