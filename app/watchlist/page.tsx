@@ -5,6 +5,7 @@ import { ArrowRight, Bookmark } from 'lucide-react';
 import Header from '@/components/header';
 import CinemaHeaderFallback from '@/components/cinema-header-fallback';
 import MovieList from '@/components/movie-list';
+import { MovieResultsSkeleton } from '@/components/movie-skeleton';
 import { useMovieLibrary } from '@/lib/use-movie-library';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -18,7 +19,7 @@ export default function WatchlistPage() {
 }
 
 function WatchlistContent() {
-  const { saved, watched, isLoading, storageError, retry } = useMovieLibrary();
+  const { saved, watched, isLoading, isFetching, storageError, retry } = useMovieLibrary();
   const { user } = useAuth();
   const [collection, setCollection] = useState<'saved' | 'watched'>('saved');
   const visible = useWatchlistVisit(saved, watched);
@@ -32,14 +33,13 @@ function WatchlistContent() {
           <div>
             <h1>Watchlist</h1>
           </div>
-          <Bookmark size={24} strokeWidth={1} className='mb-2 shrink-0 text-primary' aria-hidden='true' />
         </div>
         {storageError && <div role='alert' className='mb-4 text-sm text-destructive'>{storageError} <button type='button' className='underline' onClick={retry}>Retry sync</button></div>}
         <div className='collection-tabs' role='group' aria-label='Movie collection'>
           <button type='button' aria-pressed={collection === 'saved'} onClick={() => setCollection('saved')}>Saved<span>{saved.length}</span></button>
           <button type='button' aria-pressed={collection === 'watched'} onClick={() => setCollection('watched')}>Watched<span>{watched.length}</span></button>
         </div>
-        {isLoading ? <p role='status' className='py-12 text-muted-foreground'>Loading your watchlist…</p> : movies.length === 0 ? (
+        {isLoading || isFetching ? <MovieResultsSkeleton layout='list' showActions label='Loading your watchlist' /> : movies.length === 0 ? (
           <section className='empty-screen'>
             <Bookmark size={36} strokeWidth={1.5} />
             <h2>{collection === 'saved' ? 'No saved movies yet' : 'No watched movies yet'}</h2>

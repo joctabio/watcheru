@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { loadTs } from './load-ts.mjs';
 
 const navigation = loadTs('lib/movie-navigation.ts');
-const Link = ({ children, ...props }) => createElement('a', props, children);
+const Link = ({ children, href }) => createElement('a', { href }, children);
 
 test('search context round-trips through a movie URL with punctuation, page, and list view', () => {
   const origin = navigation.searchResultsHref('Love & War? 日本', 3, 'list');
@@ -68,4 +68,24 @@ test('the actual detail page renders a back button to the original search', asyn
   assert.ok(html.includes('Back to search results'));
   const href = html.match(/href="([^"]+)"/)[1].replaceAll('&amp;', '&');
   assert.equal(href, origin);
+});
+
+
+test('Discover detail navigation skips the server fetch and returns without resetting scroll', async () => {
+  let prefetched = false;
+  let backProps;
+  const MoviePage = loadTs('app/directory/[id]/page.tsx', {
+    '@/app/get-query-client': { getQueryClient: () => ({ prefetchQuery: async () => { prefetched = true; } }) },
+    '@tanstack/react-query': { dehydrate: () => ({}), HydrationBoundary: ({ children }) => children },
+    './movie': () => null,
+    '@/app/queries': { fetchMovieById: () => assert.fail('Discover already loaded this movie') },
+    'next/link': (props) => { backProps = props; return Link(props); },
+    '@/lib/movie-navigation': navigation,
+    '@/components/ui/button': { Button: ({ children }) => children }
+  }).default;
+  const element = await MoviePage({ params: Promise.resolve({ id: '10' }), searchParams: Promise.resolve({ from: '/' }) });
+  assert.ok(renderToStaticMarkup(element).includes('Back to discover'));
+  assert.equal(prefetched, false);
+  assert.equal(backProps.href, '/');
+  assert.equal(backProps.scroll, false);
 });

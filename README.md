@@ -29,7 +29,7 @@ Open http://localhost:3000.
 ## Features
 
 - Random picks with optional genre, original language, release year, maximum runtime, and minimum rating preferences. Minimum ratings require at least 50 votes.
-- Up to 100 recent picks per homepage session, with a Previous pick button. Recent picks and watched movies are excluded from new suggestions.
+- Up to 100 recent picks per app session, with a Previous pick button. More info reuses full movie details and watch availability loaded during the pick. Returning to Discover restores the selected pick, history, filter values, filter panel, and scroll position until a full reload. Recent picks and watched movies are excluded from new suggestions.
 - Title search with URL-based pagination and grid/list views, result counts, empty states, and retry controls. Movie details link back to the original search title, page, and view; direct detail URLs return to Discover.
 - Movie details with runtime, cast, YouTube trailer links, and regional watch availability from JustWatch via TMDB.
 - Saved and watched collections at `/watchlist`, with limits of 200 saved and 400 watched movies. Guests use browser localStorage. Signed-in users sync through Supabase, with Google sign-in or email magic links.
@@ -50,7 +50,7 @@ npm run typecheck
 npm run build
 ```
 
-Tests use Node's built-in test runner and mock TMDB responses. They cover search encoding and validation, discovery page limits and filters, excluded movies, action error propagation, persisted library validation, and API failure handling. They do not require a live TMDB token.
+Tests use Node's built-in test runner and mock TMDB responses. They cover Discover detail caching and return navigation, search encoding and validation, discovery page limits and filters, excluded movies, action error propagation, persisted library validation, and API failure handling. They do not require a live TMDB token.
 
 The production build downloads the existing Geist fonts from Google Fonts and requires network access. Run `npm start` after a successful build.
 

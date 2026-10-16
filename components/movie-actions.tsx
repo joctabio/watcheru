@@ -3,7 +3,7 @@
 import type { MovieLibrary } from '@/lib/movie-library';
 import type { Movie } from '@/app/definitions';
 import { useMovieLibrary } from '@/lib/use-movie-library';
-import { Bookmark, Check, Trash2 } from 'lucide-react';
+import { Bookmark, Check, Plus, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 
 export default function MovieActions({ movie, allowMarkWatched = false, showSaveLabel = allowMarkWatched, watchlistCollection }: { movie: Movie; allowMarkWatched?: boolean; showSaveLabel?: boolean; watchlistCollection?: keyof MovieLibrary }) {
@@ -15,8 +15,8 @@ export default function MovieActions({ movie, allowMarkWatched = false, showSave
     const destination = watchlistCollection === 'saved' ? 'watched' : 'saved';
     const moveLabel = destination === 'watched' ? 'Mark as watched' : 'Add to watchlist';
     const restoreLabel = watchlistCollection === 'saved' ? 'Add to watchlist' : 'Mark as watched';
-    const MoveIcon = destination === 'watched' ? Check : Bookmark;
-    const RestoreIcon = watchlistCollection === 'saved' ? Bookmark : Check;
+    const MoveIcon = destination === 'watched' ? Check : Plus;
+    const RestoreIcon = watchlistCollection === 'saved' ? Plus : Check;
     return <div>
       <div className='film-actions film-actions-watchlist'>
         <Button disabled={isBusy} type='button' variant='outline' onClick={() => toggle(movie, destination)} aria-label={`${moveLabel}: ${movie.title}`}>
@@ -33,7 +33,7 @@ export default function MovieActions({ movie, allowMarkWatched = false, showSave
     <div>
       <div className={`film-actions${allowMarkWatched ? ' film-actions-watchlist' : ''}`}>
         <Button disabled={isBusy} type='button' variant={showSaveLabel ? 'outline' : 'ghost'} size={showSaveLabel ? 'default' : 'icon-lg'} className={showSaveLabel ? 'film-bookmark-label' : 'film-bookmark'} title={isSaved ? 'Remove from watchlist' : 'Add to watchlist'} aria-pressed={isSaved} onClick={() => toggle(movie, 'saved')} aria-label={isSaved ? `Remove ${movie.title} from watchlist` : `Add ${movie.title} to watchlist`}>
-          <Bookmark size={18} className='size-[18px]' fill={isSaved ? 'currentColor' : 'none'} aria-hidden='true' />
+          {isSaved ? <Bookmark size={18} className='size-[18px]' fill='currentColor' aria-hidden='true' /> : <Plus size={18} className='size-[18px]' aria-hidden='true' />}
           {showSaveLabel && (isSaved ? 'Saved' : 'Add to watchlist')}
         </Button>
         {allowMarkWatched && <Button disabled={isBusy} type='button' variant='outline' aria-pressed={isWatched} onClick={() => toggle(movie, 'watched')} aria-label={isWatched ? `Mark ${movie.title} as unwatched` : `Mark ${movie.title} as watched`}>

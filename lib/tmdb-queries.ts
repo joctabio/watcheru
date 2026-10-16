@@ -1,7 +1,7 @@
 import 'server-only';
 
 import fetchTmdbApi from '@/lib/api';
-import type { Genre, MovieDetails, MovieFilters, MovieSummary, PaginatedResponse, ShowSummary, WatchAvailability } from '@/app/definitions';
+import type { DiscoverMovie, Genre, MovieDetails, MovieFilters, MovieSummary, PaginatedResponse, ShowSummary, WatchAvailability } from '@/app/definitions';
 import { z } from 'zod';
 
 const filtersSchema = z.object({
@@ -52,13 +52,19 @@ export async function fetchRandomMovie(filters: MovieFilters = {}, excludedIds: 
     params.set('vote_count.gte', '50');
   }
   const movie = await fetchRandomDiscoverItem<MovieSummary>('/discover/movie', params, excluded.data);
-  // Discovery omits runtime. Enrich the selected movie before revealing it,
-  // but keep the pick usable if this optional metadata request fails.
-  const details = await fetchTmdbApi<{ runtime: number | null }>(`/movie/${movie.id}`, {
-    signal: AbortSignal.timeout(3000)
-  }).catch(() => ({ runtime: null }));
+  // Load every detail panel before revealing the pick. More info reuses this data.
+  const details = await fetchTmdbApi<MovieDetails & { 'watch/providers'?: { results: Record<string, WatchAvailability> } }>(
+    `/movie/${movie.id}?append_to_response=credits,videos,watch/providers`
+  );
   const runtime = typeof details.runtime === 'number' && Number.isFinite(details.runtime) && details.runtime > 0 ? details.runtime : null;
-  return { ...movie, runtime };
+  return {
+    ...movie, ...details, runtime,
+    genre_ids: movie.genre_ids ?? [],
+    genres: details.genres ?? [],
+    credits: details.credits ?? { cast: [] },
+    videos: details.videos ?? { results: [] },
+    watchProviders: details['watch/providers']?.results ?? {}
+  } satisfies DiscoverMovie;
 }
 
 export async function fetchRandomShow() {

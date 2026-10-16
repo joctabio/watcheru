@@ -6,6 +6,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { getQueryClient } from './get-query-client';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useEffect } from 'react';
+import { DiscoverProvider } from '@/components/discover-provider';
 import { AuthProvider } from '@/components/auth-provider';
 import { MovieLibraryProvider } from '@/lib/use-movie-library';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -32,7 +33,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
-        <AuthProvider><MovieLibraryProvider>{children}</MovieLibraryProvider></AuthProvider>
+        <AuthProvider><MovieLibraryProvider><DiscoverProvider>{children}</DiscoverProvider></MovieLibraryProvider></AuthProvider>
       </ThemeProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

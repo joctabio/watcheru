@@ -18,7 +18,9 @@ export default async function MoviePage({
   const returnDestination = getMovieReturnDestination(from);
   const queryClient = getQueryClient();
 
-  await queryClient.prefetchQuery({
+  // Discover seeds the browser cache while shuffling; do not refetch on navigation.
+  // A shared/reloaded URL still falls back to the client query if its cache is empty.
+  if (from !== '/') await queryClient.prefetchQuery({
     queryKey: ['movie', id],
     queryFn: () => fetchMovieById(id)
   });
@@ -28,7 +30,7 @@ export default async function MoviePage({
       <main className='detail-shell'>
         <div className='detail-heading'>
           <Button variant='ghost' className='back-button' asChild>
-            <Link href={returnDestination.href}><ArrowLeft size={16} />{returnDestination.label}</Link>
+            <Link href={returnDestination.href} scroll={returnDestination.href !== '/'}><ArrowLeft size={16} />{returnDestination.label}</Link>
           </Button>
         </div>
         <Movie id={id} />

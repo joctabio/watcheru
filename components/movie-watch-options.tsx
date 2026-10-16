@@ -22,7 +22,7 @@ const categories: Array<[keyof Omit<WatchAvailability, 'link'>, string]> = [
 export default function MovieWatchOptions({ movieId }: { movieId: number }) {
   const id = useId();
   const [region, setRegion] = useState('PH');
-  const providers = useQuery({ queryKey: ['providers', String(movieId)], queryFn: () => fetchMovieProviders(String(movieId)) });
+  const providers = useQuery({ queryKey: ['providers', String(movieId)], queryFn: () => fetchMovieProviders(String(movieId)), staleTime: Infinity, gcTime: Infinity });
   const availability = providers.data?.[region];
   const groups = categories.filter(([key]) => availability?.[key]?.length);
 

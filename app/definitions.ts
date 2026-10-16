@@ -23,6 +23,8 @@ export type MovieDetails = Movie & {
   videos: { results: Array<{ key: string; site: string; type: string; official: boolean }> };
 };
 
+export type DiscoverMovie = MovieSummary & MovieDetails & { watchProviders: Record<string, WatchAvailability> };
+
 export type PaginatedResponse<T> = {
   page: number;
   results: T[];

@@ -11,7 +11,9 @@ import MovieExtras from '@/components/movie-extras';
 export default function MovieDisplay({ id }: { id: string }) {
   const { data, isPending, isFetching, error, refetch } = useQuery({
     queryKey: ['movie', id],
-    queryFn: () => fetchMovieById(id)
+    queryFn: () => fetchMovieById(id),
+    staleTime: Infinity,
+    gcTime: Infinity
   });
 
   if (isPending) return <MovieDetailsSkeleton />;

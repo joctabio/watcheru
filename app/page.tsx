@@ -1,39 +1,36 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchMovieGenres, fetchRandomMovie } from './queries';
-import { Suspense, useId, useLayoutEffect, useReducer, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { Suspense, useId, useLayoutEffect, useRef, type FormEvent, type ReactNode } from 'react';
 import { ArrowLeft, Play, SlidersHorizontal } from 'lucide-react';
 import Header from '@/components/header';
 import CinemaHeaderFallback from '@/components/cinema-header-fallback';
 import { Spinner } from '@/components/ui/spinner';
 import MovieHero from '@/components/movie-hero';
+import { MovieCardSkeleton } from '@/components/movie-skeleton';
 import MovieFilters from '@/components/movie-filters';
 import ResponsivePickActions from '@/components/responsive-pick-actions';
-import type { Genre, MovieFilters as Filters, MovieSummary } from './definitions';
+import type { Genre, MovieFilters as Filters } from './definitions';
 import RequestError from '@/components/request-error';
 import { useMovieLibrary } from '@/lib/use-movie-library';
 
-type History = { items: MovieSummary[]; index: number };
-function historyReducer(state: History, action: { type: 'pick'; movie: MovieSummary } | { type: 'previous' }) {
-  if (action.type === 'previous') return { ...state, index: Math.max(0, state.index - 1) };
-  const items = [...state.items, action.movie].slice(-100);
-  return { items, index: items.length - 1 };
-}
+import { cacheDiscoverMovie } from '@/lib/discover-cache';
+import { emptyPreferences, useDiscover } from '@/components/discover-provider';
 
 export default function Home() {
   const pickerFormId = useId();
   const filtersId = `${pickerFormId}-filters`;
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [history, dispatch] = useReducer(historyReducer, { items: [], index: -1 });
+  const { history, dispatch, filtersOpen, setFiltersOpen, preferences, setPreferences, scrollPositionRef } = useDiscover();
+  const queryClient = useQueryClient();
   const scrollAfterPick = useRef(false);
   const scrollToFilters = useRef(false);
   const movie = history.items[history.index];
   const { watched } = useMovieLibrary();
   const picker = useMutation({
     mutationFn: async (filters: Filters) => {
-      // Let the outgoing fade finish even when the API responds immediately.
+      // Let the skeleton fade in even when the API responds immediately.
       const shouldFade = movie && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const [nextMovie] = await Promise.all([
         fetchRandomMovie(filters, [...new Set([...history.items.map((item) => item.id), ...watched.map((item) => item.id)])]),
@@ -42,11 +39,17 @@ export default function Home() {
       return nextMovie;
     },
     onSuccess: (nextMovie) => {
+      cacheDiscoverMovie(queryClient, nextMovie);
       scrollAfterPick.current = Boolean(movie);
+      scrollPositionRef.current = 0;
       dispatch({ type: 'pick', movie: nextMovie });
     }
   });
-  const genres = useQuery({ queryKey: ['genres'], queryFn: fetchMovieGenres });
+  const genres = useQuery({ queryKey: ['genres'], queryFn: fetchMovieGenres, staleTime: Infinity });
+
+  useLayoutEffect(() => {
+    window.scrollTo({ top: scrollPositionRef.current, left: 0, behavior: 'instant' });
+  }, [scrollPositionRef]);
 
   useLayoutEffect(() => {
     if (scrollAfterPick.current) {
@@ -96,17 +99,22 @@ export default function Home() {
       <Suspense fallback={<CinemaHeaderFallback />}><Header /></Suspense>
       <main className={`cinema-shell discover-page${movie ? '' : ' discover-initial'}`}>
         {movie ? (
-          <div className='movie-pick-transition' data-loading={picker.isPending} aria-busy={picker.isPending} inert={picker.isPending}>
-            <MovieHero movie={movie} runtime={movie.runtime} detailsHref={`/directory/${movie.id}`} genres={movie.genre_ids.map((id) => genres.data?.find((genre) => genre.id === id)).filter((genre): genre is Genre => Boolean(genre))} />
+          <div className='movie-pick-transition' data-loading={picker.isPending} aria-busy={picker.isPending}>
+            <div className='movie-pick-content' inert={picker.isPending} aria-hidden={picker.isPending}>
+              <MovieHero movie={movie} runtime={movie.runtime} detailsHref={`/directory/${movie.id}?from=%2F`} onMoreInfo={() => { scrollPositionRef.current = window.scrollY; }} genres={movie.genre_ids.map((id) => genres.data?.find((genre) => genre.id === id)).filter((genre): genre is Genre => Boolean(genre))} />
+            </div>
+            <div className='movie-pick-skeleton' aria-hidden={!picker.isPending}>
+              <MovieCardSkeleton />
+            </div>
           </div>
         ) : (
           <div className='screening-room'>
             <SplashScreen actions={pickControls} />
           </div>
         )}
-        <form id={pickerFormId} onSubmit={pickMovie} onReset={() => picker.reset()} className={`picker-desk${movie ? '' : ' picker-desk-initial'}`} aria-busy={picker.isPending}>
+        <form id={pickerFormId} onSubmit={pickMovie} onReset={() => { picker.reset(); setPreferences(emptyPreferences); }} className={`picker-desk${movie ? '' : ' picker-desk-initial'}`} aria-busy={picker.isPending}>
           {movie && pickControls}
-          <MovieFilters id={filtersId} hidden={!filtersOpen} genres={genres.data ?? []} disabled={picker.isPending} />
+          <MovieFilters id={filtersId} hidden={!filtersOpen} genres={genres.data ?? []} disabled={picker.isPending} values={preferences} onChange={(field, value) => setPreferences((current) => ({ ...current, [field]: value }))} />
           {genres.error && <RequestError error={genres.error} isRetrying={genres.isFetching} onRetry={() => { void genres.refetch(); }} />}
           {picker.error && <RequestError error={picker.error} isRetrying={picker.isPending} onRetry={() => picker.mutate(picker.variables ?? {})} />}
         </form>

@@ -31,7 +31,7 @@ export default function MovieList({ movies, layout = 'grid', showActions = false
               <div className='poster-meta'>
                 <span>{movie.release_date?.split('-')[0] || 'Release date unknown'}</span>
                 <span className='text-primary' aria-hidden='true'>·</span><span>{movie.original_language.toUpperCase()}</span>
-                {list && <><span className='text-primary' aria-hidden='true'>·</span><span>{movie.vote_count ? `${movie.vote_average.toFixed(1)} / 10` : 'Not rated'}</span></>}
+                {list && <><span className='text-primary' aria-hidden='true'>·</span><span className='inline-flex items-center gap-1.5'>{movie.vote_count > 0 && <Star size={13} className='rating-star shrink-0' fill='currentColor' aria-hidden='true' />}{movie.vote_count ? `${movie.vote_average.toFixed(1)} / 10` : 'Not rated'}</span></>}
               </div>
               {list && <p className='poster-description line-clamp-3'>{movie.overview || 'No synopsis available.'}</p>}
             </div>

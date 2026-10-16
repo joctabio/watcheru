@@ -36,6 +36,7 @@ type LibraryContext = MovieLibrary & {
   toggle: (movie: Movie, collection: Collection) => void;
   storageError: string | null;
   isLoading: boolean;
+  isFetching: boolean;
   isBusy: boolean;
   retry: () => void;
 };
@@ -127,7 +128,8 @@ export function MovieLibraryProvider({ children }: { children: React.ReactNode }
   const error = cloud.isError && user ? 'Could not sync your watchlist. Check your connection and retry.' : user && hasMovies(guest) && cloud.isSuccess ? 'Some browser movies are waiting to sync. If your account list is full, remove movies to make room. Your browser movies remain saved locally.' : null;
   return <LibraryContext.Provider value={{
     ...library, toggle, storageError: storageError ?? error,
-    isLoading: loading || (!!user && cloud.isPending), isBusy,
+    isLoading: loading || (!!user && cloud.isPending),
+    isFetching: !!user && cloud.isFetching, isBusy,
     retry: () => { setStorageError(null); void cloud.refetch(); }
   }}>{children}</LibraryContext.Provider>;
 }

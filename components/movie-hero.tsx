@@ -6,11 +6,12 @@ import { Button } from './ui/button';
 import MovieActions from './movie-actions';
 import MoviePoster from './movie-poster';
 
-export default function MovieHero({ movie, genres, runtime, detailsHref, variant = 'card' }: {
+export default function MovieHero({ movie, genres, runtime, detailsHref, onMoreInfo, variant = 'card' }: {
   movie: Movie;
   genres: Genre[];
   runtime?: number | null;
   detailsHref?: string;
+  onMoreInfo?: () => void;
   variant?: 'card' | 'detail';
 }) {
   return (
@@ -23,7 +24,6 @@ export default function MovieHero({ movie, genres, runtime, detailsHref, variant
         <div className='feature-copy'>
           <div className='film-heading'>
             <h1>{movie.title}</h1>
-            {variant === 'detail' && <div className='hero-library-actions film-actions-reveal'><MovieActions movie={movie} /></div>}
           </div>
           <div className='film-meta'>
             <span>{movie.release_date?.split('-')[0] || 'Release date unknown'}</span>
@@ -43,12 +43,12 @@ export default function MovieHero({ movie, genres, runtime, detailsHref, variant
               <div className='film-stat'><strong>{movie.vote_count.toLocaleString('en')}</strong><span>Audience votes</span></div>
               <div className='film-stat'><strong>{movie.popularity.toFixed(0)}</strong><span>Popularity</span></div>
             </div>
-            {variant === 'card' && <div className='film-result-actions film-actions-reveal'>
+            <div className='film-result-actions film-actions-reveal'>
               <MovieActions movie={movie} showSaveLabel allowMarkWatched />
-              {detailsHref && <Button variant='outline' className='film-more-info' asChild>
-                <Link href={detailsHref}><Info size={16} aria-hidden='true' />More info</Link>
+              {variant === 'card' && detailsHref && <Button variant='outline' className='film-more-info' asChild>
+                <Link href={detailsHref} prefetch onNavigate={onMoreInfo}><Info size={16} aria-hidden='true' />More info</Link>
               </Button>}
-            </div>}
+            </div>
           </div>
         </div>
       </div>

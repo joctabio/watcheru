@@ -63,7 +63,7 @@ export default function AccountMenu() {
     </DropdownMenuTrigger>
     <DropdownMenuContent align='end' sideOffset={8} className='w-60'>
       <DropdownMenuLabel className='whitespace-normal break-words'>
-        {user ? name : 'Your account'}
+        {user ? name : 'Welcome, Guest!'}
         {user?.email && fullName && <span className='mt-1 block text-xs font-normal text-muted-foreground'>{user.email}</span>}
       </DropdownMenuLabel>
       <DropdownMenuSeparator />

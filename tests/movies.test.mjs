@@ -86,12 +86,12 @@ test('empty filters and exhausted results have actionable errors', async () => {
   await assert.rejects(service(async () => page([{ id: 1 }])).fetchRandomMovie({}, [1]), /new title/);
 });
 
-test('runtime lookup failures preserve the selected movie and unknown runtimes stay empty', async () => {
+test('detail failures keep a pick from being revealed incomplete and unknown runtimes stay empty', async () => {
   const failingRuntime = service(async (endpoint) => {
     if (endpoint.startsWith('/movie/')) throw new Error('Metadata unavailable');
     return page([{ id: 1 }]);
   });
-  assert.deepEqual(await failingRuntime.fetchRandomMovie(), { id: 1, runtime: null });
+  await assert.rejects(failingRuntime.fetchRandomMovie(), /Metadata unavailable/);
   for (const runtime of [null, 0, -1, 'unknown']) {
     const tmdb = service(async (endpoint) => endpoint.startsWith('/movie/') ? { runtime } : page([{ id: 1 }]));
     assert.equal((await tmdb.fetchRandomMovie()).runtime, null);
@@ -190,4 +190,17 @@ test('missing configuration produces an error without making a network request',
   delete process.env.TMDB_ACCESS_TOKEN;
   t.mock.method(globalThis, 'fetch', () => assert.fail('Fetch should not be called'));
   await assert.rejects(api('/movie/1'), /not configured/);
+});
+
+
+test('shuffling loads cast, trailer, and all watch availability in the selected detail request', async () => {
+  const urls = [];
+  const details = { id: 10, runtime: 120, genres: [{ id: 28, name: 'Action' }], credits: { cast: [{ id: 1, name: 'Actor', character: 'Role' }] }, videos: { results: [{ key: 'trailer', site: 'YouTube', type: 'Trailer', official: true }] }, 'watch/providers': { results: { PH: { link: 'https://example.test/watch', rent: [{ provider_id: 1, provider_name: 'Provider', logo_path: null }] } } } };
+  const tmdb = service(async (endpoint) => { urls.push(endpoint); return endpoint.startsWith('/movie/') ? details : page([{ id: 10, genre_ids: [28] }]); });
+  const movie = await tmdb.fetchRandomMovie();
+  assert.equal(urls.length, 2);
+  assert.equal(urls[1], '/movie/10?append_to_response=credits,videos,watch/providers');
+  assert.deepEqual(movie.credits, details.credits);
+  assert.deepEqual(movie.videos, details.videos);
+  assert.deepEqual(movie.watchProviders, details['watch/providers'].results);
 });
